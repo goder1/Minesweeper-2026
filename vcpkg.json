@@ -1,0 +1,12 @@
+{
+  "name": "minesweeper-2026",
+  "version": "0.1.0",
+  "dependencies": [
+    {
+      "name": "drogon",
+      "features": ["postgres"]
+    },
+    { "name": "jwt-cpp", "features": ["picojson"] },
+    "libsodium"
+  ]
+}

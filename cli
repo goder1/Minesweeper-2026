@@ -2,6 +2,8 @@
 set -euo pipefail
 
 BUILD_DIR="build"
+VCPKG_ROOT="${VCPKG_ROOT:-$HOME/vcpkg}"
+TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
 SRC_CPP=$(find src -name "*.cpp" -o -name "*.h" 2>/dev/null | tr '\n' ' ')
 ALL_CPP=$(find src tests -name "*.cpp" -o -name "*.h" 2>/dev/null | tr '\n' ' ')
 
@@ -20,15 +22,31 @@ require_compile_commands() {
     fi
 }
 
+cmake_build() {
+    local extra_args=("$@")
+    if [ -f "$TOOLCHAIN_FILE" ]; then
+        cmake -B "$BUILD_DIR" \
+              -DCMAKE_BUILD_TYPE=Debug \
+              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+              -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_FILE" \
+              "${extra_args[@]}"
+    else
+        echo "warning: vcpkg not found at $VCPKG_ROOT — building without it"
+        cmake -B "$BUILD_DIR" \
+              -DCMAKE_BUILD_TYPE=Debug \
+              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+              "${extra_args[@]}"
+    fi
+
+    cmake --build "$BUILD_DIR" --parallel
+}
+
 cmd=${1:-help}
 
 case "$cmd" in
 
     build)
-        cmake -B "$BUILD_DIR" \
-              -DCMAKE_BUILD_TYPE=Debug \
-              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-        cmake --build "$BUILD_DIR" --parallel
+        cmake_build
         ;;
 
     test)
@@ -60,14 +78,10 @@ case "$cmd" in
 
     rebuild)
         rm -rf "$BUILD_DIR"
-        cmake -B "$BUILD_DIR" \
-              -DCMAKE_BUILD_TYPE=Debug \
-              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-        cmake --build "$BUILD_DIR" --parallel
+        cmake_build
         ;;
 
     ci)
-        # Full check: build → test → lint → format-check
         "$0" build
         "$0" test
         "$0" lint
@@ -77,7 +91,7 @@ case "$cmd" in
     help|*)
         echo "usage: ./cli <command>"
         echo ""
-        echo "  build          configure and build"
+        echo "  build          configure and build (uses vcpkg if VCPKG_ROOT is set)"
         echo "  test           run unit tests"
         echo "  lint           run clang-tidy static analysis"
         echo "  format         apply clang-format to all source files"

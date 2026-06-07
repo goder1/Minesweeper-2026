@@ -1,9 +1,9 @@
 #pragma once
 
+#include <optional>
+
 #include "game/GameSession.h"
 #include "session/PlayerSession.h"
-
-#include <optional>
 
 enum class AppScreen {
     MainMenu,

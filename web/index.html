@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Minesweeper 2026</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="bomb-overlay"></div>
+  <button id="undo-btn" class="undo-fab" hidden>Undo</button>
+
+  <header class="topbar">
+    <span class="topbar-logo">💣</span>
+    <h1>Minesweeper 2026</h1>
+    <div class="account-info">
+      <button id="avatar-btn" class="avatar-btn" aria-haspopup="true" aria-expanded="false">
+        <span id="avatar-initial">G</span>
+      </button>
+      <div id="account-menu" class="account-menu" hidden></div>
+    </div>
+  </header>
+
+  <main class="app">
+
+    <section id="screen-menu" class="screen screen-centered">
+      <h2>Main Menu</h2>
+      <nav class="menu-nav">
+        <button class="menu-btn" data-screen="play-setup">Play</button>
+        <button class="menu-btn" data-screen="leaderboard">Leaderboard</button>
+        <button class="menu-btn" data-screen="settings">Settings</button>
+      </nav>
+    </section>
+
+    <section id="screen-play-setup" class="screen">
+      <button class="back-btn" data-screen="menu">← Menu</button>
+
+      <div class="play-layout">
+        <aside class="play-illustration" aria-hidden="true">
+          <div class="illustration-grid">
+            <span class="ic flag">🚩</span><span class="ic n3">3</span><span class="ic mine">💣</span><span class="ic"></span>
+            <span class="ic n2">2</span><span class="ic mine">💣</span><span class="ic n2">2</span><span class="ic n1">1</span>
+            <span class="ic"></span><span class="ic n1">1</span><span class="ic n1">1</span><span class="ic"></span>
+            <span class="ic flag">🚩</span><span class="ic n2">2</span><span class="ic mine">💣</span><span class="ic n1">1</span>
+          </div>
+          <p>Sweep the field, flag the mines, and don't trigger a boom!</p>
+        </aside>
+
+        <div class="play-controls">
+          <p class="setup-hint">Choose your difficulty:</p>
+          <div class="difficulty-switcher">
+            <button id="diff-prev" class="diff-arrow" aria-label="Previous difficulty">‹</button>
+            <span id="diff-label" class="diff-label" role="button" tabindex="0">Beginner</span>
+            <button id="diff-next" class="diff-arrow" aria-label="Next difficulty">›</button>
+          </div>
+          <p id="diff-description" class="diff-description"></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-play-game" class="screen screen-game">
+      <button id="pause-btn" class="pause-btn" aria-label="Pause game">☰</button>
+
+      <div class="game-hud">
+        <span id="mistake-counter">Mistakes: 0</span>
+        <span id="timer">00:00</span>
+      </div>
+
+      <p id="status" class="status"></p>
+
+      <div id="board" class="board"></div>
+
+      <button id="win-menu-btn" class="menu-btn" hidden>Return to menu</button>
+    </section>
+
+    <div id="pause-overlay" class="pause-overlay" hidden>
+      <div class="pause-card">
+        <h2>Paused</h2>
+        <button id="resume-btn">Resume</button>
+        <button id="quit-btn">Quit to menu</button>
+      </div>
+    </div>
+
+    <section id="screen-leaderboard" class="screen">
+      <button class="back-btn" data-screen="menu">← Menu</button>
+      <h2>Leaderboard</h2>
+      <label for="lb-difficulty">Difficulty</label>
+      <select id="lb-difficulty">
+        <option value="beginner">Beginner</option>
+        <option value="intermediate">Intermediate</option>
+        <option value="expert">Expert</option>
+        <option value="custom">Custom</option>
+      </select>
+      <table class="lb-table">
+        <thead>
+          <tr><th>#</th><th>Player</th><th>Time</th><th>Mistakes</th><th>Date</th></tr>
+        </thead>
+        <tbody id="lb-body"></tbody>
+      </table>
+      <div id="lb-pagination" class="lb-pagination" hidden>
+        <button id="lb-prev" class="lb-page-btn" aria-label="Previous page">‹</button>
+        <span id="lb-page-label"></span>
+        <button id="lb-next" class="lb-page-btn" aria-label="Next page">›</button>
+      </div>
+      <p id="lb-message" class="form-message"></p>
+    </section>
+
+    <section id="screen-settings" class="screen">
+      <button class="back-btn" data-screen="menu">← Menu</button>
+      <h2>Settings</h2>
+
+      <div class="settings-block">
+        <h3>Appearance</h3>
+        <div class="theme-toggle">
+          <button id="theme-light-btn" class="theme-btn" data-theme="light">☀️ Light</button>
+          <button id="theme-dark-btn" class="theme-btn" data-theme="dark">🌙 Dark</button>
+        </div>
+      </div>
+
+      <div id="settings-account" class="settings-block" hidden>
+        <h3>Account</h3>
+        <form id="nickname-form" class="auth-form">
+          <input name="nickname" placeholder="New nickname" maxlength="32" required>
+          <button type="submit">Save nickname</button>
+        </form>
+        <p id="nickname-message" class="form-message"></p>
+
+        <p class="settings-label">Avatar</p>
+        <div id="avatar-picker" class="avatar-picker"></div>
+        <p id="avatar-message" class="form-message"></p>
+      </div>
+
+      <p id="settings-guest-note" class="form-message" hidden>Log in to change your nickname and avatar.</p>
+    </section>
+
+    <section id="screen-login" class="screen">
+      <button class="back-btn" data-screen="menu">← Menu</button>
+      <h2>Log in</h2>
+      <form id="login-form" class="auth-form">
+        <input name="nickname" placeholder="Nickname" autocomplete="username" required>
+        <input name="password" type="password" placeholder="Password" autocomplete="current-password" required>
+        <button type="submit">Log in</button>
+      </form>
+      <p id="login-message" class="form-message"></p>
+    </section>
+
+    <section id="screen-register" class="screen">
+      <button class="back-btn" data-screen="menu">← Menu</button>
+      <h2>Register</h2>
+      <form id="register-form" class="auth-form">
+        <input name="nickname" placeholder="Nickname" autocomplete="username" required>
+        <input name="password" type="password" placeholder="Password (min 6 chars)" autocomplete="new-password" required>
+        <button type="submit">Create account</button>
+      </form>
+      <p id="register-message" class="form-message"></p>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

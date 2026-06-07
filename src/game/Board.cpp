@@ -57,7 +57,8 @@ void Board::CalculateAdjacent() {
                     if (i == 0 && j == 0) {
                         continue;
                     }
-                    if (InBounds(x_coord + i, y_coord + j) && GetCell(x_coord + i, y_coord + j).is_mine) {
+                    if (InBounds(x_coord + i, y_coord + j) &&
+                        GetCell(x_coord + i, y_coord + j).is_mine) {
                         ++count;
                     }
                 }
@@ -92,8 +93,9 @@ void Board::RevealCell(std::size_t x_coord, std::size_t y_coord) {
     RevealAllAround(x_coord, y_coord);
 
     int hidden_safe = 0;
-    for (const auto& c : cells_) {
-        if (!c.is_mine && (c.state == CellState::Hidden || c.state == CellState::Flagged)) {
+    for (const auto& cell : cells_) {
+        if (!cell.is_mine &&
+            (cell.state == CellState::Hidden || cell.state == CellState::Flagged)) {
             ++hidden_safe;
         }
     }

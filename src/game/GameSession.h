@@ -1,9 +1,9 @@
 #pragma once
 
+#include <string>
+
 #include "Board.h"
 #include "Difficulty.h"
-
-#include <string>
 
 class GameSession {
 public:

@@ -30,8 +30,7 @@ bool App::CanResumeGame() const {
     if (!session_.IsAuthenticated()) {
         return false;
     }
-    return active_game_.has_value() &&
-           active_game_->GetBoard().Status() == GameStatus::Ongoing;
+    return active_game_.has_value() && active_game_->GetBoard().Status() == GameStatus::Ongoing;
 }
 
 void App::ResumeGame() {
