@@ -14,4 +14,4 @@ struct Claims {
 
 std::optional<Claims> VerifyToken(const std::string& token);
 
-}  // namespace jwt_helper
+}

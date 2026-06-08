@@ -49,7 +49,7 @@ const std::set<std::string>& AllowedControlsModes() {
     return modes;
 }
 
-}  // namespace
+}
 
 void UserController::Me(const drogon::HttpRequestPtr& req,
                         std::function<void(const drogon::HttpResponsePtr&)>&& callback) {

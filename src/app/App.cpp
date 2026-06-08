@@ -5,12 +5,10 @@
 App::App() : session_(PlayerSession::Guest()) {}
 
 void App::Login(std::string user_id, std::string username) {
-    // TODO
     session_ = PlayerSession::Authenticated(std::move(user_id), std::move(username));
 }
 
 void App::Logout() {
-    // TODO
     active_game_.reset();
     session_ = PlayerSession::Guest();
     screen_ = AppScreen::MainMenu;

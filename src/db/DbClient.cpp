@@ -17,4 +17,4 @@ drogon::orm::DbClientPtr Get() {
     return g_client;
 }
 
-}  // namespace db
+}

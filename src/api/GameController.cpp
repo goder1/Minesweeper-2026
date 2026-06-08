@@ -85,7 +85,6 @@ public:
     }
 
 private:
-    // Caller must hold mutex_.
     void SweepExpired(std::chrono::steady_clock::time_point now) {
         for (auto it = games_.begin(); it != games_.end();) {
             if (now - it->second.last_active > kGuestSessionTtl) {
