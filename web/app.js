@@ -399,6 +399,8 @@ function renderSettings() {
   const loggedIn = Boolean(getToken());
   settingsAccount.hidden = !loggedIn;
   settingsGuestNote.hidden = loggedIn;
+  setFormMessage(nicknameMessage, '', '');
+  setFormMessage(avatarMessage, '', '');
   if (loggedIn) {
     renderAvatarPicker();
   }

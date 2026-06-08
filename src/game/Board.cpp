@@ -1,7 +1,6 @@
 #include "Board.h"
 
 #include <algorithm>
-#include <numeric>
 #include <random>
 #include <stdexcept>
 
@@ -66,16 +65,47 @@ const Cell& Board::GetCellInfo(std::size_t x_coord, std::size_t y_coord) const {
 }
 
 void Board::PlaceMines(std::size_t x_coord, std::size_t y_coord) {
-    std::vector<std::size_t> indices(width_ * height_);
-    std::iota(indices.begin(), indices.end(), 0);
+    const std::size_t clicked_index = y_coord * width_ + x_coord;
 
-    indices.erase(indices.begin() + static_cast<std::ptrdiff_t>(y_coord * width_ + x_coord));
+    std::vector<bool> in_opening(cells_.size(), false);
+    in_opening[clicked_index] = true;
+    for (int j = -1; j <= 1; ++j) {
+        for (int i = -1; i <= 1; ++i) {
+            if (i == 0 && j == 0) {
+                continue;
+            }
+            if (InBounds(x_coord + i, y_coord + j)) {
+                in_opening[(y_coord + j) * width_ + (x_coord + i)] = true;
+            }
+        }
+    }
+
+    // Cells outside the clicked cell's neighborhood are placed first; its neighbors (but
+    // never the clicked cell itself) are only used as a fallback for boards too small to
+    // keep the whole opening mine-free.
+    std::vector<std::size_t> candidates;
+    std::vector<std::size_t> opening_neighbors;
+    for (std::size_t index = 0; index < cells_.size(); ++index) {
+        if (index == clicked_index) {
+            continue;
+        }
+        (in_opening[index] ? opening_neighbors : candidates).push_back(index);
+    }
 
     std::mt19937 rng(std::random_device{}());
-    std::shuffle(indices.begin(), indices.end(), rng);
+    std::shuffle(candidates.begin(), candidates.end(), rng);
 
-    for (std::size_t i = 0; i < mine_cnt_; ++i) {
-        cells_[indices[i]].is_mine = true;
+    std::size_t placed = std::min(mine_cnt_, candidates.size());
+    for (std::size_t i = 0; i < placed; ++i) {
+        cells_[candidates[i]].is_mine = true;
+    }
+
+    if (placed < mine_cnt_) {
+        std::shuffle(opening_neighbors.begin(), opening_neighbors.end(), rng);
+        for (std::size_t i = 0; placed < mine_cnt_ && i < opening_neighbors.size();
+             ++i, ++placed) {
+            cells_[opening_neighbors[i]].is_mine = true;
+        }
     }
 
     CalculateAdjacent();

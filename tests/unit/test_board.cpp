@@ -73,30 +73,37 @@ TEST(BoardTest, CannotRevealFlaggedCell) {
     EXPECT_EQ(board.GetCellInfo(0, 0).state, CellState::Flagged);
 }
 
+namespace {
+// Builds a 2x1 board with a known mine at (1, 0), bypassing PlaceMines so the
+// "safe first click" guarantee can't turn the only other cell into the mine
+// (which would instantly win the game before these tests get to reveal it).
+Board BoardWithMineAtOne() {
+    Board::SavedState state;
+    state.mines = {1};
+    return Board(2, 1, 1, state);
+}
+}  // namespace
+
 TEST(BoardTest, HittingMineSetsHitMineState) {
-    Board board(2, 1, 1);
-    board.RevealCell(0, 0);
+    Board board = BoardWithMineAtOne();
     board.RevealCell(1, 0);
     EXPECT_EQ(board.GetCellInfo(1, 0).state, CellState::HitMine);
 }
 
 TEST(BoardTest, HittingMineSetsPendingRevert) {
-    Board board(2, 1, 1);
-    board.RevealCell(0, 0);
+    Board board = BoardWithMineAtOne();
     board.RevealCell(1, 0);
     EXPECT_TRUE(board.HasPendingRevert());
 }
 
 TEST(BoardTest, HittingMineIncrementsMistakeCount) {
-    Board board(2, 1, 1);
-    board.RevealCell(0, 0);
+    Board board = BoardWithMineAtOne();
     board.RevealCell(1, 0);
     EXPECT_EQ(board.MistakeCount(), 1);
 }
 
 TEST(BoardTest, RevertMoveRestoresHiddenState) {
-    Board board(2, 1, 1);
-    board.RevealCell(0, 0);
+    Board board = BoardWithMineAtOne();
     board.RevealCell(1, 0);
     board.RevertMove();
     EXPECT_EQ(board.GetCellInfo(1, 0).state, CellState::Hidden);
@@ -104,16 +111,14 @@ TEST(BoardTest, RevertMoveRestoresHiddenState) {
 }
 
 TEST(BoardTest, NoMovesAllowedWhilePendingRevert) {
-    Board board(2, 1, 1);
-    board.RevealCell(0, 0);
+    Board board = BoardWithMineAtOne();
     board.RevealCell(1, 0);
     board.ToggleFlag(0, 0);
-    EXPECT_EQ(board.GetCellInfo(0, 0).state, CellState::Revealed);
+    EXPECT_EQ(board.GetCellInfo(0, 0).state, CellState::Hidden);
 }
 
 TEST(BoardTest, MistakeCountAccumulatesAcrossReverts) {
-    Board board(2, 1, 1);
-    board.RevealCell(0, 0);
+    Board board = BoardWithMineAtOne();
     board.RevealCell(1, 0);
     board.RevertMove();
     board.RevealCell(1, 0);
