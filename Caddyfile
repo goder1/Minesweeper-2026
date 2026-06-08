@@ -1,3 +1,14 @@
+{
+    order rate_limit first
+}
+
 minesweeper.site {
+    rate_limit {
+        zone dynamic {
+            key {remote_host}
+            events 200
+            window 1m
+        }
+    }
     reverse_proxy app:8080
 }
