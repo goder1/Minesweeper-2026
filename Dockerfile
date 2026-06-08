@@ -2,7 +2,7 @@ FROM ubuntu:24.04 AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential cmake ninja-build git curl zip unzip tar pkg-config \
-        autoconf automake libtool m4 python3 bison flex perl ca-certificates \
+        autoconf autoconf-archive automake libtool m4 python3 bison flex perl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 ENV VCPKG_ROOT=/opt/vcpkg
