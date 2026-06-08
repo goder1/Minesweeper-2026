@@ -8,6 +8,7 @@
 class GameSession {
 public:
     GameSession(GameConfig config, std::string player_id);
+    GameSession(GameConfig config, std::string player_id, const Board::SavedState& saved_state);
 
     [[nodiscard]] Board& GetBoard();
     [[nodiscard]] const Board& GetBoard() const;

@@ -1,0 +1,11 @@
+build/
+Build/
+build-*/
+.git/
+.cache/
+.vscode/
+uploads/
+*.log
+*.tmp
+*.bak
+vcpkg_installed/

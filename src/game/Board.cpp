@@ -17,6 +17,42 @@ Board::Board(std::size_t width, std::size_t height, std::size_t mine_cnt)
     }
 }
 
+Board::Board(std::size_t width, std::size_t height, std::size_t mine_cnt, const SavedState& state)
+    : Board(width, height, mine_cnt) {
+    for (const std::size_t index : state.mines) {
+        cells_[index].is_mine = true;
+    }
+    CalculateAdjacent();
+
+    for (const std::size_t index : state.revealed) {
+        cells_[index].state = CellState::Revealed;
+    }
+    for (const std::size_t index : state.flagged) {
+        cells_[index].state = CellState::Flagged;
+    }
+
+    mistake_count_ = state.mistake_count;
+    initialized_ = true;
+    CheckWin();
+}
+
+Board::SavedState Board::Serialize() const {
+    SavedState state;
+    state.mistake_count = mistake_count_;
+    for (std::size_t index = 0; index < cells_.size(); ++index) {
+        const Cell& cell = cells_[index];
+        if (cell.is_mine) {
+            state.mines.push_back(index);
+        } else if (cell.state == CellState::Revealed) {
+            state.revealed.push_back(index);
+        }
+        if (cell.state == CellState::Flagged) {
+            state.flagged.push_back(index);
+        }
+    }
+    return state;
+}
+
 bool Board::InBounds(std::size_t x_coord, std::size_t y_coord) const {
     return x_coord < width_ && y_coord < height_;
 }
@@ -79,6 +115,10 @@ void Board::RevealCell(std::size_t x_coord, std::size_t y_coord) {
     }
 
     Cell& cell = GetCell(x_coord, y_coord);
+    if (cell.state == CellState::Revealed) {
+        ChordReveal(x_coord, y_coord);
+        return;
+    }
     if (cell.state != CellState::Hidden) {
         return;
     }
@@ -91,7 +131,10 @@ void Board::RevealCell(std::size_t x_coord, std::size_t y_coord) {
     }
 
     RevealAllAround(x_coord, y_coord);
+    CheckWin();
+}
 
+void Board::CheckWin() {
     int hidden_safe = 0;
     for (const auto& cell : cells_) {
         if (!cell.is_mine &&
@@ -102,6 +145,53 @@ void Board::RevealCell(std::size_t x_coord, std::size_t y_coord) {
     if (hidden_safe == 0) {
         status_ = GameStatus::Won;
     }
+}
+
+void Board::ChordReveal(std::size_t x_coord, std::size_t y_coord) {
+    Cell& cell = GetCell(x_coord, y_coord);
+    if (cell.adjacent_mines == 0) {
+        return;
+    }
+
+    int flagged = 0;
+    for (int j = -1; j <= 1; ++j) {
+        for (int i = -1; i <= 1; ++i) {
+            if (i == 0 && j == 0) {
+                continue;
+            }
+            if (InBounds(x_coord + i, y_coord + j) &&
+                GetCell(x_coord + i, y_coord + j).state == CellState::Flagged) {
+                ++flagged;
+            }
+        }
+    }
+    if (flagged != cell.adjacent_mines) {
+        return;
+    }
+
+    for (int j = -1; j <= 1; ++j) {
+        for (int i = -1; i <= 1; ++i) {
+            if (i == 0 && j == 0) {
+                continue;
+            }
+            if (!InBounds(x_coord + i, y_coord + j)) {
+                continue;
+            }
+            Cell& neighbor = GetCell(x_coord + i, y_coord + j);
+            if (neighbor.state != CellState::Hidden) {
+                continue;
+            }
+            if (neighbor.is_mine) {
+                neighbor.state = CellState::HitMine;
+                ++mistake_count_;
+                pending_revert_ = true;
+                return;
+            }
+            RevealAllAround(x_coord + i, y_coord + j);
+        }
+    }
+
+    CheckWin();
 }
 
 void Board::RevertMove() {

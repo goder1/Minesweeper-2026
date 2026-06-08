@@ -8,7 +8,6 @@
 </head>
 <body>
   <div id="bomb-overlay"></div>
-  <button id="undo-btn" class="undo-fab" hidden>Undo</button>
 
   <header class="topbar">
     <span class="topbar-logo">💣</span>
@@ -26,6 +25,7 @@
     <section id="screen-menu" class="screen screen-centered">
       <h2>Main Menu</h2>
       <nav class="menu-nav">
+        <button id="continue-btn" class="menu-btn" hidden>Continue game</button>
         <button class="menu-btn" data-screen="play-setup">Play</button>
         <button class="menu-btn" data-screen="leaderboard">Leaderboard</button>
         <button class="menu-btn" data-screen="settings">Settings</button>
@@ -62,6 +62,7 @@
       <button id="pause-btn" class="pause-btn" aria-label="Pause game">☰</button>
 
       <div class="game-hud">
+        <button id="undo-btn" class="undo-btn" hidden>Undo</button>
         <span id="mistake-counter">Mistakes: 0</span>
         <span id="timer">00:00</span>
       </div>
@@ -114,6 +115,15 @@
         <div class="theme-toggle">
           <button id="theme-light-btn" class="theme-btn" data-theme="light">☀️ Light</button>
           <button id="theme-dark-btn" class="theme-btn" data-theme="dark">🌙 Dark</button>
+        </div>
+      </div>
+
+      <div class="settings-block">
+        <h3>Controls</h3>
+        <p class="settings-label">Mouse buttons</p>
+        <div class="theme-toggle">
+          <button id="controls-standard-btn" class="controls-btn" data-mode="standard">Left: Reveal · Right: Flag</button>
+          <button id="controls-swapped-btn" class="controls-btn" data-mode="swapped">Left: Flag · Right: Reveal</button>
         </div>
       </div>
 

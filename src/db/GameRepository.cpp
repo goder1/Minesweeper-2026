@@ -7,7 +7,7 @@ void GameRepository::FindByUserId(const std::string& user_id, FoundCb on_found,
     db_->execSqlAsync(
         "SELECT id::text, user_id::text, difficulty, width, height, mine_cnt, "
         "       state::text, elapsed_secs, mistake_count "
-        "FROM games WHERE user_id = $1",
+        "FROM games WHERE user_id = $1::uuid",
         [on_found = std::move(on_found),
          on_not_found = std::move(on_not_found)](const drogon::orm::Result& result) {
             if (result.empty()) {
@@ -30,7 +30,7 @@ void GameRepository::CreateOrUpdate(const GameRow& row, DoneCb on_done, ErrorCb 
     db_->execSqlAsync(
         "INSERT INTO games (user_id, difficulty, width, height, mine_cnt, state, elapsed_secs, "
         "mistake_count) "
-        "VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8) "
+        "VALUES ($1::uuid, $2, $3::int, $4::int, $5::int, $6::jsonb, $7, $8) "
         "ON CONFLICT (user_id) DO UPDATE "
         "SET difficulty    = EXCLUDED.difficulty, "
         "    width         = EXCLUDED.width, "
@@ -50,7 +50,7 @@ void GameRepository::CreateOrUpdate(const GameRow& row, DoneCb on_done, ErrorCb 
 
 void GameRepository::DeleteByUserId(const std::string& user_id, DoneCb on_done, ErrorCb on_error) {
     db_->execSqlAsync(
-        "DELETE FROM games WHERE user_id = $1",
+        "DELETE FROM games WHERE user_id = $1::uuid",
         [on_done = std::move(on_done)](const drogon::orm::Result&) { on_done(); },
         [on_error = std::move(on_error)](const drogon::orm::DrogonDbException& exception) {
             on_error(exception);

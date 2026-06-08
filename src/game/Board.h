@@ -11,7 +11,17 @@ enum class GameStatus {
 
 class Board {
 public:
+    struct SavedState {
+        std::vector<std::size_t> mines;
+        std::vector<std::size_t> revealed;
+        std::vector<std::size_t> flagged;
+        int mistake_count = 0;
+    };
+
     Board(std::size_t width, std::size_t height, std::size_t mine_cnt);
+    Board(std::size_t width, std::size_t height, std::size_t mine_cnt, const SavedState& state);
+
+    [[nodiscard]] SavedState Serialize() const;
 
     void RevealCell(std::size_t x_coord, std::size_t y_coord);
     void ToggleFlag(std::size_t x_coord, std::size_t y_coord);
@@ -29,6 +39,8 @@ private:
     void PlaceMines(std::size_t x_coord, std::size_t y_coord);
     void CalculateAdjacent();
     void RevealAllAround(std::size_t x_coord, std::size_t y_coord);
+    void ChordReveal(std::size_t x_coord, std::size_t y_coord);
+    void CheckWin();
     [[nodiscard]] bool InBounds(std::size_t x_coord, std::size_t y_coord) const;
     Cell& GetCell(std::size_t x_coord, std::size_t y_coord);
 

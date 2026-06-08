@@ -519,6 +519,7 @@ body {
 
 .game-hud {
   display: flex;
+  align-items: center;
   gap: 24px;
   font-weight: 700;
   font-size: 16px;
@@ -600,12 +601,8 @@ body {
   opacity: 1;
 }
 
-.undo-fab {
-  position: fixed;
-  top: 72px;
-  left: 16px;
-  z-index: 100;
-  padding: 10px 18px;
+.undo-btn {
+  padding: 6px 16px;
   border: none;
   border-radius: 999px;
   background: var(--mine-bg);
@@ -613,10 +610,10 @@ body {
   font-weight: 700;
   font-size: 14px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(227, 93, 93, 0.5);
+  box-shadow: 0 2px 8px rgba(227, 93, 93, 0.4);
 }
 
-.undo-fab:hover {
+.undo-btn:hover {
   background: #c94c4c;
 }
 
@@ -651,7 +648,8 @@ body {
   gap: 10px;
 }
 
-.theme-btn {
+.theme-btn,
+.controls-btn {
   flex: 1;
   padding: 10px 12px;
   border: 2px solid var(--border-soft);
@@ -662,11 +660,13 @@ body {
   cursor: pointer;
 }
 
-.theme-btn:hover {
+.theme-btn:hover,
+.controls-btn:hover {
   border-color: var(--accent);
 }
 
-.theme-btn.active {
+.theme-btn.active,
+.controls-btn.active {
   border-color: var(--accent);
   background: var(--accent);
   color: #fff;

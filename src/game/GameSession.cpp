@@ -5,6 +5,12 @@ GameSession::GameSession(GameConfig config, std::string player_id)
       config_(config),
       player_id_(std::move(player_id)) {}
 
+GameSession::GameSession(GameConfig config, std::string player_id,
+                         const Board::SavedState& saved_state)
+    : board_(config.width, config.height, config.mine_cnt, saved_state),
+      config_(config),
+      player_id_(std::move(player_id)) {}
+
 Board& GameSession::GetBoard() {
     return board_;
 }

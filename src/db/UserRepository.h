@@ -10,6 +10,8 @@ struct UserRow {
     std::string nickname;
     std::string password_hash;
     std::string avatar;
+    std::string theme;
+    std::string controls_mode;
 };
 
 class UserRepository {
@@ -33,6 +35,10 @@ public:
                         ErrorCb on_error);
     void UpdateAvatar(const std::string& user_id, const std::string& avatar, DoneCb on_done,
                       ErrorCb on_error);
+    void UpdateTheme(const std::string& user_id, const std::string& theme, DoneCb on_done,
+                     ErrorCb on_error);
+    void UpdateControlsMode(const std::string& user_id, const std::string& controls_mode,
+                            DoneCb on_done, ErrorCb on_error);
 
 private:
     drogon::orm::DbClientPtr db_;

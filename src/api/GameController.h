@@ -10,6 +10,8 @@ public:
     ADD_METHOD_TO(GameController::Flag, "/api/game/flag", drogon::Post);
     ADD_METHOD_TO(GameController::Revert, "/api/game/revert", drogon::Post);
     ADD_METHOD_TO(GameController::State, "/api/game/state", drogon::Get);
+    ADD_METHOD_TO(GameController::Save, "/api/game/save", drogon::Post);
+    ADD_METHOD_TO(GameController::Resume, "/api/game/resume", drogon::Post);
     METHOD_LIST_END
 
     static void Start(const drogon::HttpRequestPtr& req,
@@ -26,4 +28,10 @@ public:
 
     static void State(const drogon::HttpRequestPtr& req,
                       std::function<void(const drogon::HttpResponsePtr&)>&& callback);
+
+    static void Save(const drogon::HttpRequestPtr& req,
+                     std::function<void(const drogon::HttpResponsePtr&)>&& callback);
+
+    static void Resume(const drogon::HttpRequestPtr& req,
+                       std::function<void(const drogon::HttpResponsePtr&)>&& callback);
 };

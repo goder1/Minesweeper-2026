@@ -9,6 +9,9 @@ function showScreen(name) {
     paused = false;
     pauseOverlay.hidden = true;
   }
+  if (name === 'menu') {
+    updateContinueButton();
+  }
   if (name === 'leaderboard') {
     loadLeaderboard();
   }
@@ -72,6 +75,8 @@ async function refreshProfile() {
       localStorage.setItem('ms_avatar', data.avatar);
       renderAccountInfo();
     }
+    if (data.theme) applyTheme(data.theme);
+    if (data.controls) applyControlMode(data.controls);
   } catch (err) {
 
   }
@@ -96,7 +101,9 @@ function renderAccountInfo() {
 
     const logout = document.createElement('button');
     logout.textContent = 'Log out';
-    logout.addEventListener('click', () => {
+    logout.addEventListener('click', async () => {
+      setAccountMenuOpen(false);
+      await leaveActiveGame(true);
       clearSession();
       showScreen('menu');
     });
@@ -169,8 +176,10 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || 'login failed');
 
+    await leaveActiveGame(false);
     setSession(data.token, nickname);
     refreshProfile();
+    await tryResumeSavedGame();
     setFormMessage(messageEl, `Welcome back, ${nickname}!`, 'success');
     form.reset();
     showScreen('menu');
@@ -199,6 +208,7 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || 'registration failed');
 
+    await leaveActiveGame(false);
     setSession(data.token, nickname);
     refreshProfile();
     setFormMessage(messageEl, `Account created — welcome, ${nickname}!`, 'success');
@@ -308,10 +318,45 @@ function applyTheme(theme) {
 }
 
 themeButtons.forEach((btn) => {
-  btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+  btn.addEventListener('click', async () => {
+    const theme = btn.dataset.theme;
+    applyTheme(theme);
+    if (getToken()) {
+      try {
+        await patchProfile({ theme });
+      } catch (err) {
+      }
+    }
+  });
 });
 
 applyTheme(getTheme());
+
+const controlsButtons = document.querySelectorAll('.controls-btn');
+
+function getControlMode() {
+  return localStorage.getItem('ms_controls') || 'standard';
+}
+
+function applyControlMode(mode) {
+  localStorage.setItem('ms_controls', mode);
+  controlsButtons.forEach((btn) => btn.classList.toggle('active', btn.dataset.mode === mode));
+}
+
+controlsButtons.forEach((btn) => {
+  btn.addEventListener('click', async () => {
+    const mode = btn.dataset.mode;
+    applyControlMode(mode);
+    if (getToken()) {
+      try {
+        await patchProfile({ controls: mode });
+      } catch (err) {
+      }
+    }
+  });
+});
+
+applyControlMode(getControlMode());
 
 async function patchProfile(body) {
   const res = await fetch('/api/users/me', {
@@ -394,11 +439,13 @@ const pauseOverlay = document.getElementById('pause-overlay');
 const resumeBtn = document.getElementById('resume-btn');
 const quitBtn = document.getElementById('quit-btn');
 const winMenuBtn = document.getElementById('win-menu-btn');
+const continueBtn = document.getElementById('continue-btn');
 
 let sessionId = null;
 let difficultyIndex = 0;
 let paused = false;
 let gameOver = false;
+let savedElapsedSeconds = null;
 
 function setDifficulty(index) {
   difficultyIndex = (index + DIFFICULTIES.length) % DIFFICULTIES.length;
@@ -446,6 +493,15 @@ function stopTimer() {
   }
 }
 
+function resumeTimer() {
+  stopTimer();
+  renderTimer();
+  timerHandle = setInterval(() => {
+    elapsedSeconds += 1;
+    renderTimer();
+  }, 1000);
+}
+
 function openPause() {
   if (paused) return;
   paused = true;
@@ -458,10 +514,39 @@ function closePause() {
   paused = false;
   pauseOverlay.hidden = true;
   if (!gameOver) {
-    timerHandle = setInterval(() => {
-      elapsedSeconds += 1;
-      renderTimer();
-    }, 1000);
+    resumeTimer();
+  }
+}
+
+function updateContinueButton() {
+  continueBtn.hidden = !sessionId || gameOver;
+}
+
+async function leaveActiveGame(shouldSave) {
+  if (!sessionId || gameOver) return;
+  if (shouldSave) {
+    try {
+      await api('/api/game/save', { method: 'POST', body: { elapsed_secs: elapsedSeconds } });
+    } catch (err) {
+    }
+  }
+  sessionId = null;
+  gameOver = false;
+  savedElapsedSeconds = null;
+  paused = false;
+  pauseOverlay.hidden = true;
+  stopTimer();
+}
+
+async function tryResumeSavedGame() {
+  if (!getToken() || sessionId) return;
+  try {
+    const data = await api('/api/game/resume', { method: 'POST' });
+    sessionId = data.session_id;
+    gameOver = false;
+    savedElapsedSeconds = typeof data.elapsed_secs === 'number' ? data.elapsed_secs : null;
+    updateContinueButton();
+  } catch (err) {
   }
 }
 
@@ -475,7 +560,6 @@ quitBtn.addEventListener('click', () => {
   paused = false;
   pauseOverlay.hidden = true;
   stopTimer();
-  sessionId = null;
   showScreen('menu');
 });
 
@@ -513,7 +597,28 @@ async function startGame() {
     winMenuBtn.hidden = true;
     startTimer();
     renderBoard(data.board);
+    updateContinueButton();
   } catch (err) {
+    showError(err);
+  }
+}
+
+async function continueGame() {
+  if (!sessionId || gameOver) return;
+  try {
+    const board = await api('/api/game/state');
+    winMenuBtn.hidden = true;
+    showScreen('play-game');
+    renderBoard(board);
+    if (savedElapsedSeconds !== null) {
+      elapsedSeconds = savedElapsedSeconds;
+      savedElapsedSeconds = null;
+      renderTimer();
+    }
+    resumeTimer();
+  } catch (err) {
+    sessionId = null;
+    updateContinueButton();
     showError(err);
   }
 }
@@ -568,10 +673,22 @@ function renderBoard(board) {
         div.classList.add('mine');
       }
 
-      div.addEventListener('click', () => reveal(x, y));
+      div.addEventListener('click', () => {
+        if (cell.state === 'revealed') {
+          reveal(x, y);
+        } else if (getControlMode() === 'swapped') {
+          toggleFlag(x, y);
+        } else {
+          reveal(x, y);
+        }
+      });
       div.addEventListener('contextmenu', (e) => {
         e.preventDefault();
-        toggleFlag(x, y);
+        if (cell.state === 'revealed') {
+          return;
+        }
+        if (getControlMode() === 'swapped') reveal(x, y);
+        else toggleFlag(x, y);
       });
 
       boardEl.appendChild(div);
@@ -608,6 +725,7 @@ winMenuBtn.addEventListener('click', () => {
   showScreen('menu');
 });
 
+continueBtn.addEventListener('click', continueGame);
 undoButton.addEventListener('click', revert);
 diffPrevButton.addEventListener('click', () => setDifficulty(difficultyIndex - 1));
 diffNextButton.addEventListener('click', () => setDifficulty(difficultyIndex + 1));
@@ -621,3 +739,4 @@ diffLabel.addEventListener('keydown', (e) => {
 
 setDifficulty(0);
 showScreen('menu');
+tryResumeSavedGame();

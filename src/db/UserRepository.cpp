@@ -5,16 +5,18 @@ UserRepository::UserRepository(drogon::orm::DbClientPtr database) : db_(std::mov
 void UserRepository::FindByNickname(const std::string& nickname, FoundCb on_found,
                                     NotFoundCb on_not_found, ErrorCb on_error) {
     db_->execSqlAsync(
-        "SELECT id::text, nickname, password_hash, avatar FROM users WHERE nickname = $1",
+        "SELECT id::text, nickname, password_hash, avatar, theme, controls_mode "
+        "FROM users WHERE nickname = $1",
         [on_found = std::move(on_found),
          on_not_found = std::move(on_not_found)](const drogon::orm::Result& result) {
             if (result.empty()) {
                 on_not_found();
             } else {
-                on_found({result[0]["id"].as<std::string>(),
-                          result[0]["nickname"].as<std::string>(),
-                          result[0]["password_hash"].as<std::string>(),
-                          result[0]["avatar"].as<std::string>()});
+                on_found(
+                    {result[0]["id"].as<std::string>(), result[0]["nickname"].as<std::string>(),
+                     result[0]["password_hash"].as<std::string>(),
+                     result[0]["avatar"].as<std::string>(), result[0]["theme"].as<std::string>(),
+                     result[0]["controls_mode"].as<std::string>()});
             }
         },
         [on_error = std::move(on_error)](const drogon::orm::DrogonDbException& exception) {
@@ -26,16 +28,18 @@ void UserRepository::FindByNickname(const std::string& nickname, FoundCb on_foun
 void UserRepository::FindById(const std::string& user_id, FoundCb on_found, NotFoundCb on_not_found,
                               ErrorCb on_error) {
     db_->execSqlAsync(
-        "SELECT id::text, nickname, password_hash, avatar FROM users WHERE id = $1::uuid",
+        "SELECT id::text, nickname, password_hash, avatar, theme, controls_mode "
+        "FROM users WHERE id = $1::uuid",
         [on_found = std::move(on_found),
          on_not_found = std::move(on_not_found)](const drogon::orm::Result& result) {
             if (result.empty()) {
                 on_not_found();
             } else {
-                on_found({result[0]["id"].as<std::string>(),
-                          result[0]["nickname"].as<std::string>(),
-                          result[0]["password_hash"].as<std::string>(),
-                          result[0]["avatar"].as<std::string>()});
+                on_found(
+                    {result[0]["id"].as<std::string>(), result[0]["nickname"].as<std::string>(),
+                     result[0]["password_hash"].as<std::string>(),
+                     result[0]["avatar"].as<std::string>(), result[0]["theme"].as<std::string>(),
+                     result[0]["controls_mode"].as<std::string>()});
             }
         },
         [on_error = std::move(on_error)](const drogon::orm::DrogonDbException& exception) {
@@ -83,4 +87,27 @@ void UserRepository::UpdateAvatar(const std::string& user_id, const std::string&
             on_error(exception);
         },
         user_id, avatar);
+}
+
+void UserRepository::UpdateTheme(const std::string& user_id, const std::string& theme,
+                                 DoneCb on_done, ErrorCb on_error) {
+    db_->execSqlAsync(
+        "UPDATE users SET theme = $2 WHERE id = $1::uuid",
+        [on_done = std::move(on_done)](const drogon::orm::Result&) { on_done(); },
+        [on_error = std::move(on_error)](const drogon::orm::DrogonDbException& exception) {
+            on_error(exception);
+        },
+        user_id, theme);
+}
+
+void UserRepository::UpdateControlsMode(const std::string& user_id,
+                                        const std::string& controls_mode, DoneCb on_done,
+                                        ErrorCb on_error) {
+    db_->execSqlAsync(
+        "UPDATE users SET controls_mode = $2 WHERE id = $1::uuid",
+        [on_done = std::move(on_done)](const drogon::orm::Result&) { on_done(); },
+        [on_error = std::move(on_error)](const drogon::orm::DrogonDbException& exception) {
+            on_error(exception);
+        },
+        user_id, controls_mode);
 }

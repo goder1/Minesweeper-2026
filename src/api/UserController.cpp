@@ -34,7 +34,19 @@ Json::Value ProfileJson(const UserRow& user) {
     resp["id"] = user.id;
     resp["nickname"] = user.nickname;
     resp["avatar"] = user.avatar;
+    resp["theme"] = user.theme;
+    resp["controls"] = user.controls_mode;
     return resp;
+}
+
+const std::set<std::string>& AllowedThemes() {
+    static const std::set<std::string> themes = {"light", "dark"};
+    return themes;
+}
+
+const std::set<std::string>& AllowedControlsModes() {
+    static const std::set<std::string> modes = {"standard", "swapped"};
+    return modes;
 }
 
 }  // namespace
@@ -107,9 +119,41 @@ void UserController::Patch(const drogon::HttpRequestPtr& req,
         avatar = std::move(value);
     }
 
-    if (!nickname && !avatar) {
+    std::optional<std::string> theme;
+    if (body->isMember("theme")) {
+        if (!(*body)["theme"].isString()) {
+            callback(JsonResp({}, drogon::k400BadRequest));
+            return;
+        }
+        std::string value = (*body)["theme"].asString();
+        if (AllowedThemes().find(value) == AllowedThemes().end()) {
+            Json::Value err;
+            err["error"] = "unknown theme";
+            callback(JsonResp(err, drogon::k400BadRequest));
+            return;
+        }
+        theme = std::move(value);
+    }
+
+    std::optional<std::string> controls;
+    if (body->isMember("controls")) {
+        if (!(*body)["controls"].isString()) {
+            callback(JsonResp({}, drogon::k400BadRequest));
+            return;
+        }
+        std::string value = (*body)["controls"].asString();
+        if (AllowedControlsModes().find(value) == AllowedControlsModes().end()) {
+            Json::Value err;
+            err["error"] = "unknown controls mode";
+            callback(JsonResp(err, drogon::k400BadRequest));
+            return;
+        }
+        controls = std::move(value);
+    }
+
+    if (!nickname && !avatar && !theme && !controls) {
         Json::Value err;
-        err["error"] = R"(expected "nickname" and/or "avatar")";
+        err["error"] = R"(expected "nickname", "avatar", "theme" and/or "controls")";
         callback(JsonResp(err, drogon::k400BadRequest));
         return;
     }
@@ -132,11 +176,27 @@ void UserController::Patch(const drogon::HttpRequestPtr& req,
             [callback]() { callback(JsonResp({}, drogon::k404NotFound)); }, error500);
     };
 
-    auto apply_avatar = [repo, user_id, avatar, respond_with_profile, error500]() {
-        if (avatar) {
-            repo->UpdateAvatar(user_id, *avatar, respond_with_profile, error500);
+    auto apply_controls = [repo, user_id, controls, respond_with_profile, error500]() {
+        if (controls) {
+            repo->UpdateControlsMode(user_id, *controls, respond_with_profile, error500);
         } else {
             respond_with_profile();
+        }
+    };
+
+    auto apply_theme = [repo, user_id, theme, apply_controls, error500]() {
+        if (theme) {
+            repo->UpdateTheme(user_id, *theme, apply_controls, error500);
+        } else {
+            apply_controls();
+        }
+    };
+
+    auto apply_avatar = [repo, user_id, avatar, apply_theme, error500]() {
+        if (avatar) {
+            repo->UpdateAvatar(user_id, *avatar, apply_theme, error500);
+        } else {
+            apply_theme();
         }
     };
 
