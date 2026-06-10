@@ -84,5 +84,5 @@ void RecordRepository::CreateOrUpdate(const std::string& user_id, const std::str
         [on_error = std::move(on_error)](const drogon::orm::DrogonDbException& exception) {
             on_error(exception);
         },
-        user_id, difficulty, time_seconds, mistake_countm ip_address);
+        user_id, difficulty, time_seconds, mistake_count, ip_address);
 }
