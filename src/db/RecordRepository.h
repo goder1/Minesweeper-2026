@@ -14,6 +14,7 @@ struct RecordRow {
     int time_seconds;
     int mistake_count;
     std::string achieved_at;
+    std::string ip_address;
 };
 
 class RecordRepository {
@@ -30,7 +31,7 @@ public:
                              ErrorCb on_error);
 
     void CreateOrUpdate(const std::string& user_id, const std::string& difficulty, int time_seconds,
-                        int mistake_count, DoneCb on_done, ErrorCb on_error);
+                        int mistake_count, const std::string& ip_address, DoneCb on_done, ErrorCb on_error);
 
 private:
     drogon::orm::DbClientPtr db_;

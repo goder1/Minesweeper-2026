@@ -251,7 +251,8 @@ function renderLeaderboardPage() {
       <td>${row.avatar || ''} ${escapeHtml(row.nickname || row.user_id)}</td>
       <td>${row.time_seconds}s</td>
       <td>${row.mistakes}</td>
-      <td>${formatAchievedAt(row.achieved_at)}</td>`;
+      <td>${formatAchievedAt(row.achieved_at)}</td>
+      <td>${escapeHtml(row.ip || '')}</td>`;
     lbBody.appendChild(tr);
   });
 

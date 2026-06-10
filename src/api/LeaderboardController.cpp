@@ -48,6 +48,7 @@ void LeaderboardController::Get(const drogon::HttpRequestPtr& req,
                 entry["time_seconds"] = row.time_seconds;
                 entry["mistakes"] = row.mistake_count;
                 entry["achieved_at"] = row.achieved_at;
+                entry["ip"] = row.ip_address;
                 arr.append(entry);
             }
             callback(JsonResp(arr, drogon::k200OK));

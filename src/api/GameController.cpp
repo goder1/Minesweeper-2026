@@ -10,6 +10,7 @@
 #include <random>
 #include <sstream>
 #include <unordered_map>
+#include <string>
 
 #include "JwtHelper.h"
 #include "db/DbClient.h"
@@ -184,6 +185,20 @@ std::optional<jwt_helper::Claims> TryAuthenticate(const drogon::HttpRequestPtr& 
     return jwt_helper::VerifyToken(auth.substr(7));
 }
 
+inline std::string clientIp(const drogon::HttpRequestPtr& req) {
+    std::string ip = req->getHeader("x-real-ip");
+    if (ip.empty()) ip = req->getHeader("x-forwarded-for");
+    if (!ip.empty()) {
+        if (auto c = ip.find(','); c != std::string::npos)
+            ip = ip.substr(0, c);
+        auto l = ip.find_first_not_of(" \t");
+        auto r = ip.find_last_not_of(" \t");
+        if (l != std::string::npos) ip = ip.substr(l, r - l + 1);
+        return ip;
+    }
+    return req->getPeerAddr().toIp();
+}
+
 void MaybeSaveRecord(const drogon::HttpRequestPtr& req, const GuestGame& game) {
     if (game.session.GetBoard().Status() != GameStatus::Won) {
         return;
@@ -197,10 +212,12 @@ void MaybeSaveRecord(const drogon::HttpRequestPtr& req, const GuestGame& game) {
         std::chrono::steady_clock::now() - game.started_at);
     const int time_seconds = static_cast<int>(std::max<long long>(1, elapsed.count()));
 
+    const std::string ip = clientIp(req);
+
     RecordRepository repo(db::Get());
     repo.CreateOrUpdate(
         claims->user_id, DifficultyToString(game.session.GetConfig().difficulty), time_seconds,
-        game.session.GetBoard().MistakeCount(), []() {},
+        game.session.GetBoard().MistakeCount(), ip, []() {},
         [](const drogon::orm::DrogonDbException&) {});
 }
 
